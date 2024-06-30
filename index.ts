@@ -435,7 +435,7 @@ function renderFloorIntoImageData(imageData: ImageData, player: Player, scene: S
     }
 }
 
-function renderGameIntoImageData(ctx: CanvasRenderingContext2D, backCtx: OffscreenCanvasRenderingContext2D, backImageData: ImageData, deltaTime: number, player: Player, scene: Scene) {
+function renderGameIntoImageData(ctx: CanvasRenderingContext2D, backImageData: ImageData, deltaTime: number, player: Player, scene: Scene) {
     const minimapPosition = Vector2.zero().add(canvasSize(ctx).scale(0.03));
     const cellSize = ctx.canvas.width*0.03;
     const minimapSize = scene.size().scale(cellSize);
@@ -444,8 +444,7 @@ function renderGameIntoImageData(ctx: CanvasRenderingContext2D, backCtx: Offscre
     renderFloorIntoImageData(backImageData, player, scene);
     renderCeilingIntoImageData(backImageData, player, scene);
     renderWallsToImageData(backImageData, player, scene);
-    backCtx.putImageData(backImageData, 0, 0);
-    ctx.drawImage(backCtx.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.putImageData(backImageData, 0, 0);
 
     renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
 
@@ -476,17 +475,15 @@ async function loadImageData(url: string): Promise<ImageData> {
     const game = document.getElementById("game") as (HTMLCanvasElement | null);
     if (game === null) throw new Error("No canvas with id `game` is found");
     const factor = 80;
-    game.width = 16*factor;
-    game.height = 9*factor;
+    game.width = SCREEN_WIDTH;
+    game.height = SCREEN_HEIGHT;
+    game.style.width = (16*factor) + "px";
+    game.style.height = (9*factor) + "px";
     const ctx = game.getContext("2d");
     if (ctx === null) throw new Error("2D context is not supported");
     ctx.imageSmoothingEnabled = false;
 
     const backImageData = new ImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
-    const backCanvas = new OffscreenCanvas(SCREEN_WIDTH, SCREEN_HEIGHT);
-    const backCtx = backCanvas.getContext("2d");
-    if (backCtx === null) throw new Error("2D context is not supported");
-    backCtx.imageSmoothingEnabled = false;
 
     const [typescript, wall1, wall2, wall3, wall4] = await Promise.all([
         loadImageData("assets/images/Typescript_logo_2020.png").catch(() => RGBA.purple()),
@@ -562,7 +559,7 @@ async function loadImageData(url: string): Promise<ImageData> {
         if (scene.canRectangleFitHere(new Vector2(player.position.x, ny), Vector2.scalar(PLAYER_SIZE))) {
             player.position.y = ny;
         }
-        renderGameIntoImageData(ctx, backCtx, backImageData, deltaTime, player, scene);
+        renderGameIntoImageData(ctx, backImageData, deltaTime, player, scene);
         window.requestAnimationFrame(frame);
     }
     window.requestAnimationFrame((timestamp) => {

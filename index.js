@@ -402,7 +402,7 @@ function renderFloorIntoImageData(imageData, player, scene) {
         }
     }
 }
-function renderGameIntoImageData(ctx, backCtx, backImageData, deltaTime, player, scene) {
+function renderGameIntoImageData(ctx, backImageData, deltaTime, player, scene) {
     const minimapPosition = Vector2.zero().add(canvasSize(ctx).scale(0.03));
     const cellSize = ctx.canvas.width * 0.03;
     const minimapSize = scene.size().scale(cellSize);
@@ -410,8 +410,7 @@ function renderGameIntoImageData(ctx, backCtx, backImageData, deltaTime, player,
     renderFloorIntoImageData(backImageData, player, scene);
     renderCeilingIntoImageData(backImageData, player, scene);
     renderWallsToImageData(backImageData, player, scene);
-    backCtx.putImageData(backImageData, 0, 0);
-    ctx.drawImage(backCtx.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.putImageData(backImageData, 0, 0);
     renderMinimap(ctx, player, minimapPosition, minimapSize, scene);
     ctx.font = "48px bold";
     ctx.fillStyle = "white";
@@ -443,18 +442,15 @@ function loadImageData(url) {
     if (game === null)
         throw new Error("No canvas with id `game` is found");
     const factor = 80;
-    game.width = 16 * factor;
-    game.height = 9 * factor;
+    game.width = SCREEN_WIDTH;
+    game.height = SCREEN_HEIGHT;
+    game.style.width = (16 * factor) + "px";
+    game.style.height = (9 * factor) + "px";
     const ctx = game.getContext("2d");
     if (ctx === null)
         throw new Error("2D context is not supported");
     ctx.imageSmoothingEnabled = false;
     const backImageData = new ImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
-    const backCanvas = new OffscreenCanvas(SCREEN_WIDTH, SCREEN_HEIGHT);
-    const backCtx = backCanvas.getContext("2d");
-    if (backCtx === null)
-        throw new Error("2D context is not supported");
-    backCtx.imageSmoothingEnabled = false;
     const [typescript, wall1, wall2, wall3, wall4] = yield Promise.all([
         loadImageData("assets/images/Typescript_logo_2020.png").catch(() => RGBA.purple()),
         loadImageData("assets/images/opengameart/wezu_tex_cc_by/wall1_color.png").catch(() => RGBA.purple()),
@@ -539,7 +535,7 @@ function loadImageData(url) {
         if (scene.canRectangleFitHere(new Vector2(player.position.x, ny), Vector2.scalar(PLAYER_SIZE))) {
             player.position.y = ny;
         }
-        renderGameIntoImageData(ctx, backCtx, backImageData, deltaTime, player, scene);
+        renderGameIntoImageData(ctx, backImageData, deltaTime, player, scene);
         window.requestAnimationFrame(frame);
     };
     window.requestAnimationFrame((timestamp) => {
